@@ -1,0 +1,13 @@
+add_subdirectory(dialog)
+add_subdirectory(state)
+target_sources(jsweep
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/appinfo.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/common.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/DigitalFontSet.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/MainPanel.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/MenuBar.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/Minefield.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/RootFrame.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/SweeperApp.cpp
+)
