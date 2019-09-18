@@ -17,9 +17,6 @@ project(jsweep)
 # Use C++14
 set(CMAKE_CXX_STANDARD 14)
 
-# Disable console window
-set(CMAKE_CXX_FLAGS -mwindows)
-
 # Configuration based on OS
 if (WIN32)
     message(STATUS "Building on Microsoft Windows...")
@@ -30,6 +27,7 @@ if (WIN32)
         message(STATUS "Building under release mode...")
         set(wxWidgets_CONFIGURATION mswu)
         add_definitions(-DwxDEBUG_LEVEL=0)
+        set(CMAKE_CXX_FLAGS -mwindows) # Disable console window
     else()
         message(FATAL_ERROR "Invalid build type specified. Terminating...")
     endif()
@@ -51,10 +49,9 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 add_executable(jsweep)
 add_subdirectory(src)
 add_subdirectory(res)
-find_library(ADDITIONAL_LIBS libuxtheme.a ${MinGW_lib_DIR}) # without this, a lot of undefined reference happens
 target_include_directories(jsweep PRIVATE src)
 target_link_libraries(jsweep
         ${wxWidgets_LIBRARIES}
-        ${ADDITIONAL_LIBS}
+        ${MinGW_lib_DIR}/libuxtheme.a # without this, a lot of undefined reference happens
         nlohmann_json::nlohmann_json
 )
