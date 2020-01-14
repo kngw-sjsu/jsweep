@@ -16,13 +16,17 @@
 #include <wx/stattext.h>
 #include "NewGameDialog.h"
 
+#include "state/GameState.h"
+
 
 /*************************************/
 /* Definitions                       */
 /*************************************/
 
-NewGameDialog::NewGameDialog(wxWindow* frame)
+NewGameDialog::NewGameDialog(wxWindow* frame, States & states)
     : wxDialog(frame, wxID_ANY, "Start New Game", wxDefaultPosition, wxDefaultSize) {
+    auto & gameState = std::get<GameState &>(states);
+
     auto topSizer = new wxBoxSizer(wxVERTICAL);
 
     // for upper area: anything except buttons
@@ -34,17 +38,18 @@ NewGameDialog::NewGameDialog(wxWindow* frame)
     upperSizer->Add(dsBoxSizer, 0, wxRIGHT | wxEXPAND, 5); // 横に5pxスペースを空ける
 
     // for text fields to specify dimensions
+    auto mapSize = gameState.GetSize();
     auto textInputSizer = new wxGridBagSizer(2, 2); // 子ノードに縦横共に2pxの余白を持たせたgbsizer
     textInputSizer->Add(new wxStaticText(dimensionsSettingsBox, wxID_ANY, wxString::FromUTF8("Width:"),
             wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE),
                     wxGBPosition(0,0), wxDefaultSpan, wxEXPAND); // POSSIBILITY OF BAD LAYOUT! MUST EDIT
-    widthTextCtrl = new wxTextCtrl(dimensionsSettingsBox, wxID_ANY, wxString::FromUTF8("12"),
+    widthTextCtrl = new wxTextCtrl(dimensionsSettingsBox, wxID_ANY, wxString::Format("%d", mapSize.x),
             wxDefaultPosition, wxSize(32,-1));
     textInputSizer->Add(widthTextCtrl, wxGBPosition(0,1)); // POSSIBILITY OF BAD LAYOUT! MUST EDIT
     textInputSizer->Add(new wxStaticText(dimensionsSettingsBox, wxID_ANY, wxString::FromUTF8("Height:"),
             wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE),
                     wxGBPosition(1,0), wxDefaultSpan, wxEXPAND); // POSSIBILITY OF BAD LAYOUT! MUST EDIT
-    heightTextCtrl = new wxTextCtrl(dimensionsSettingsBox, wxID_ANY, wxString::FromUTF8("9"),
+    heightTextCtrl = new wxTextCtrl(dimensionsSettingsBox, wxID_ANY, wxString::Format("%d", mapSize.y),
             wxDefaultPosition, wxSize(32,-1));
     textInputSizer->Add(heightTextCtrl, wxGBPosition(1,1)); // POSSIBILITY OF BAD LAYOUT! MUST EDIT
     dsBoxSizer->Add(textInputSizer);
@@ -53,9 +58,9 @@ NewGameDialog::NewGameDialog(wxWindow* frame)
     auto sliderBox = new wxStaticBox(this, wxID_ANY, wxString::FromUTF8("Mine:Map Ratio"));
     auto sliderBoxSizer = new wxStaticBoxSizer(sliderBox, wxHORIZONTAL);
     upperSizer->Add(sliderBoxSizer);
-    percentText = new PercentageText(sliderBox, 5, 75); // digital stuff
+    percentText = new PercentageText(sliderBox, 5, 75, gameState.GetRatio()); // digital stuff
     sliderBoxSizer->Add(percentText, 0, wxALIGN_TOP);
-    auto slider = new wxSlider(sliderBox, wxID_ANY, 15, 5, 75, wxDefaultPosition,
+    auto slider = new wxSlider(sliderBox, wxID_ANY, gameState.GetRatio(), 5, 75, wxDefaultPosition,
             wxDefaultSize, wxSL_VERTICAL | wxSL_MIN_MAX_LABELS | wxSL_INVERSE); // the slider
     // to force redraw text if slider pos changed
     slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent & event) {
@@ -82,8 +87,8 @@ NewGameDialog::NewGameDialog(wxWindow* frame)
 /* PercentageText inner class */
 const int NewGameDialog::PercentageText::FONT_SIZE = 23;
 
-NewGameDialog::PercentageText::PercentageText(wxWindow* parent, wxUint32 lower, wxUint32 upper)
-        : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(48, 20)), value(15), range((upper - lower) / 2),
+NewGameDialog::PercentageText::PercentageText(wxWindow* parent, wxUint32 lower, wxUint32 upper, wxUint32 ratio)
+        : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(48, 20)), value(ratio), range((upper - lower) / 2),
         mid(range + lower) {
     SetBackgroundStyle(wxBG_STYLE_PAINT); // to use wxAutoBufferedPaintDC
     Bind(wxEVT_PAINT, [this, upper, lower](wxPaintEvent & event) {

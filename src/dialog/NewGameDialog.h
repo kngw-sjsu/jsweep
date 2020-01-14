@@ -19,7 +19,7 @@ class NewGameDialog : public wxDialog {
     protected:
         wxSize DoGetBestClientSize() const override;
     public:
-        PercentageText(wxWindow* parent, wxUint32 lower, wxUint32 upper);
+        PercentageText(wxWindow* parent, wxUint32 lower, wxUint32 upper, wxUint32 ratio);
         int GetValue() {
             return value;
         }
@@ -29,7 +29,7 @@ class NewGameDialog : public wxDialog {
     } *percentText;
     wxTextCtrl *widthTextCtrl, *heightTextCtrl;
 public:
-    explicit NewGameDialog(wxWindow* frame);
+    explicit NewGameDialog(wxWindow* frame, States & states);
     wxUint32 GetRequestedHeight() {
         double d;
         heightTextCtrl->GetLineText(0).ToDouble(&d);
@@ -40,8 +40,8 @@ public:
         widthTextCtrl->GetLineText(0).ToDouble(&d);
         return (wxUint32) d;
     }
-    wxUint32 GetRequestedNumOfMines(wxUint32 width, wxUint32 height) {
-        return (wxUint32) (width * height * (percentText->GetValue() / 100.0));
+    wxUint32 GetRequestedRatio() {
+        return percentText->GetValue();
     }
 };
 

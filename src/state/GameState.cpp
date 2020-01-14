@@ -39,10 +39,13 @@ GameState::GameState() :
     playerWin(false),
 
     // The # of grids in the horizontal direction.
-    width(0),
+    width(12),
 
     // The # of grids in the vertical direction.
-    height(0),
+    height(9),
+
+    // The mine to map ratio.
+    ratio(15),
 
     // What the variable name says.
     numOfMines(0),
@@ -77,18 +80,18 @@ bool GameState::AttemptToEndGame() {
  * @param numOfMines The # of mines to be allocated across the minefield.
  * @return True, if minefield data initialization was successful.
  */
-bool GameState::InitializeField(wxUint32 width, wxUint32 height, wxUint32 numOfMines) {
+bool GameState::InitializeField(wxUint32 width, wxUint32 height, wxUint32 ratio) {
     PRINT_MSG("width: " << width << "\nheight: "<< height << "\nnumOfMines: " << numOfMines);
+    this->width = width;
+    this->height = height;
+    this->ratio = ratio;
+    this->numOfMines = width * height * (ratio / 100.0);
 
     // Cannot create map if...
     //      The map was specified to be of size smaller than 9x9.
     //      The number of mines to place is greater than 999.
     if (width < 9 || height < 9 || numOfMines > 999)
         return false;
-
-    this->width = width;
-    this->height = height;
-    this->numOfMines = numOfMines;
 
     // To be SURE that conditions for starting a game have been met
     readyToPlay = width >= 0 && height >= 0 && numOfMines >= 0;

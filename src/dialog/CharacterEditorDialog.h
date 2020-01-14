@@ -11,7 +11,7 @@
 
 class CharacterEditorDialog : public wxDialog {
 public:
-    CharacterEditorDialog(wxWindow* parent, States & states, bool isAddMode = false);
+    CharacterEditorDialog(wxWindow* parent, States & states);
 };
 
 

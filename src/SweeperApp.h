@@ -23,6 +23,7 @@ class SweeperApp : public wxApp {
     States states{availableCharactersState, characterState, gameState, timerState};
 public:
     bool OnInit() override;
+    int OnExit() override;
 };
 
 #endif //JSWEEP_SWEEPERAPP_H

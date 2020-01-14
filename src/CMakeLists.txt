@@ -4,6 +4,7 @@ target_sources(jsweep
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/appinfo.h
             ${CMAKE_CURRENT_SOURCE_DIR}/common.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/Character.h
             ${CMAKE_CURRENT_SOURCE_DIR}/DigitalFontSet.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/MainPanel.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/MenuBar.cpp

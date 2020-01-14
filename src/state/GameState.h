@@ -29,7 +29,7 @@ class GameState : public State<GameState> {
     };
 
     bool fieldGenerated, readyToPlay, inGame, playerWin;
-    wxUint32 width, height, numOfMines, numOfNonRevealedGrids;
+    wxUint32 width, height, ratio, numOfMines, numOfNonRevealedGrids;
 
     // List of grids that contain mines to keep track of which are remaining and what not.
     std::list<Grid*> bombGrids;
@@ -87,6 +87,14 @@ public:
     }
 
     /**
+     * Gets the mine to map ratio.
+     * @return The mine to map ratio.
+     */
+    wxUint32 GetRatio() const {
+        return ratio;
+    }
+
+    /**
      * Returns the flag detnoting if the minefield has been generated. Used for default screen checking.
      * @return Flag denoting whether or not the minefield has been generated.
      */
@@ -118,9 +126,22 @@ public:
         return playerWin;
     }
 
+    /**
+     * Sets width, height, ratio to be used for the creation of new map.
+     * Normally called by initialization code in the SweeperApp class.
+     * @param width The width of the map.
+     * @param height The height of the map.
+     * @param ratio The mine to map ratio of the map.
+     */
+    void SetMapInfo(wxUint32 width, wxUint32 height, wxUint32 ratio) {
+        this->width = width;
+        this->height = height;
+        this->ratio = ratio;
+    }
+
     bool AttemptToEndGame();
     bool BeginGame(wxInt32 clickedX, wxInt32 clickedY);
-    bool InitializeField(wxUint32 width, wxUint32 height, wxUint32 numOfMines);
+    bool InitializeField(wxUint32 width, wxUint32 height, wxUint32 ratio);
     void RevealGrid(wxInt32 clickedX, wxInt32 clickedY);
 };
 

@@ -24,5 +24,5 @@ CharacterState::CharacterState() :
     // Keeps track of the facial expression of the current character.
     status(State::NORMAL),
 
-    // The position of the radio item currently selected.
-    characterRadioPos(0) {}
+    // The pointer to our currently selected character.
+    currentCharacter(nullptr) {}

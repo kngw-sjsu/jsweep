@@ -272,7 +272,7 @@ Minefield::Minefield(wxWindow* parent, States & states)
 
     // To do: Bind this after map gets generated.
     Bind(wxEVT_RIGHT_UP, [this, &characterState, &gameState](wxMouseEvent & event) {
-        if (!gameState.IsReadyToPlay() || !gameState.IsInGame()) return;
+        if (!gameState.IsReadyToPlay() || !gameState.IsInGame() || event.LeftIsDown()) return;
         auto clickPos = event.GetPosition() / GRID_PIXEL_SIZE;
         // the clicked grid must not be already revealed,
         // ...as flagging an already pressed grid is undefined behavior

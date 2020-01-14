@@ -8,6 +8,7 @@
 /* Includes                          */
 /*************************************/
 
+#include <iomanip>
 #include <wx/msgdlg.h>
 #include "MenuBar.h"
 #include "dialog/AboutDialog.h"
@@ -50,16 +51,19 @@ MenuBar::MenuBar(wxWindow* frame, States & states) :
     auto view = new wxMenu;
     auto character = new wxMenu;
     wxUint32 radioItemPos = 0;
-    for (auto & pair : availableCharactersState.GetAllCharacters()) {
-        character->AppendRadioItem(CHARACTER_ID_LOWEST + radioItemPos, pair.first);
+    for (auto & eachCharacter : availableCharactersState.GetAllCharacters()) {
+        PRINT_MSG("eachCharacter.windowId: " << eachCharacter.windowId);
+        character->AppendRadioItem(eachCharacter.windowId, eachCharacter.name);
         // Character selection event
-        Bind(wxEVT_MENU, [radioItemPos, &characterState](wxCommandEvent & event) {
-            characterState.ChangeCharacterRadioPos(radioItemPos);
+        Bind(wxEVT_MENU, [&characterState, &eachCharacter, radioItemPos](wxCommandEvent & event) {
+            characterState.ChangeCharacter(eachCharacter);
             characterState.NotifyAll();
-        }, CHARACTER_ID_LOWEST + radioItemPos);
+        }, eachCharacter.windowId);
         ++radioItemPos;
     }
     characterRadioItemNum = radioItemPos;
+    // Check initial character as defined by config.json
+    character->FindItem(characterState.GetCurrentCharacter().windowId)->Check();
     character->AppendSeparator();
     character->Append(ADD_CHARACTER, "Add New Character");
     character->Append(REMOVE_CHARACTER, "Remove Current Character");
@@ -79,7 +83,7 @@ MenuBar::MenuBar(wxWindow* frame, States & states) :
     Bind(wxEVT_MENU, [frame](wxCommandEvent & event){frame->Close();}, wxID_EXIT);
 
     // Open New Game Dialog
-    Bind(wxEVT_MENU, [this, &gameState, frame](wxCommandEvent & event){
+    Bind(wxEVT_MENU, [this, &gameState, &states, frame](wxCommandEvent & event){
         // If a game has started, and hasn't ended yet, prompt player if restart is really ok
         if (promptUponNewGame) {
             wxMessageDialog askForRestartGame(frame,
@@ -91,11 +95,11 @@ MenuBar::MenuBar(wxWindow* frame, States & states) :
             gameState.NotifyAll();
             promptUponNewGame = false;
         }
-        NewGameDialog newGameDialog(frame);
+        NewGameDialog newGameDialog(frame, states);
         if (newGameDialog.ShowModal() == wxID_OK) { // If Start(OK) was pressed on the dialog.
             auto w = (unsigned) newGameDialog.GetRequestedWidth(),
                     h = (unsigned) newGameDialog.GetRequestedHeight();
-            if (gameState.InitializeField(w, h, newGameDialog.GetRequestedNumOfMines(w, h)))
+            if (gameState.InitializeField(w, h, newGameDialog.GetRequestedRatio()))
                 gameState.NotifyAll();
             else
                 wxMessageDialog (frame, "Unable to initialize the minefield.\n"
@@ -108,37 +112,36 @@ MenuBar::MenuBar(wxWindow* frame, States & states) :
 
     // Open Character Editor dialog in add mode
     Bind(wxEVT_MENU, [frame, &states](wxCommandEvent & event){
-        CharacterEditorDialog characterEditorDialog(frame, states, true);
+        CharacterEditorDialog characterEditorDialog(frame, states);
         characterEditorDialog.ShowModal();
     }, ADD_CHARACTER);
 
     // Open Remove Character information dialog
     Bind(wxEVT_MENU, [&availableCharactersState, &characterState, character, frame, this](wxCommandEvent & event) {
-        wxUint32 currentCharPos = characterState.GetCharacterRadioPos();
-        auto characterNameToRemove = availableCharactersState.GetAllCharacters()[currentCharPos].first;
+        // wxUint32 radioItemPosToRemove = characterState.GetCharacterRadioPos();
+        auto & characterToRemove = characterState.GetCurrentCharacter(); // availableCharactersState.GetAllCharacters()[radioItemPosToRemove];
+        wxString nameOfRemovedCharacter = characterToRemove.name;
+        wxInt32 wIdOfRemovedCharacter = characterToRemove.windowId;
         wxMessageDialog dlg(frame, wxString::Format("Remove character \"%s\"? This cannot be undone!",
-                availableCharactersState.GetAllCharacters()[currentCharPos].first),
-                        "Remove Character?", wxYES_NO | wxCANCEL | wxCANCEL_DEFAULT | wxCENTER | wxICON_QUESTION);
+            characterToRemove.name), "Remove Character?", wxYES_NO | wxCANCEL | wxCANCEL_DEFAULT | wxCENTER | wxICON_QUESTION);
         if (dlg.ShowModal() == wxID_YES) {
             // Prevent the default character from being removed!
-            if (!availableCharactersState.RemoveCharacter(currentCharPos)) {
+            if (!availableCharactersState.RemoveCharacter(characterToRemove)) {
                 wxMessageDialog (frame, "Cannot remove the default character!", "Removal Unsuccessful",
                                  wxOK | wxOK_DEFAULT | wxCENTER | wxICON_EXCLAMATION).ShowModal();
                 return;
             }
-            character->Remove(CHARACTER_ID_LOWEST + currentCharPos);
-            std::ifstream ifs("additional_chars.json");
-            nlohmann::json j;
-            ifs >> j;
-            j.erase(j.begin() + currentCharPos);
-            std::ofstream ofs("additional_chars.json");
-            ofs << j;
-            PRINT_MSG("File updated success");
+            character->Destroy(wIdOfRemovedCharacter);
             for (auto suffix : {"-normal", "-leftdown", "-win", "-lose"})
-                wxRemoveFile(wxString::Format("img/%s%s.png", characterNameToRemove, suffix));
+                wxRemoveFile(wxString::Format("img/%s%s.png", nameOfRemovedCharacter, suffix));
+            PRINT_MSG("characterRadioItemNum: " << characterRadioItemNum);
             --characterRadioItemNum;
-            character->Check(CHARACTER_ID_LOWEST + (characterRadioItemNum - 1), true);
-            characterState.ChangeCharacterRadioPos(characterRadioItemNum - 1);
+            PRINT_MSG("characterRadioItemNum: " << characterRadioItemNum);
+            // wxInt32 newRadioPos = radioItemPosToRemove < characterRadioItemNum ?
+            //    radioItemPosToRemove : radioItemPosToRemove - 1;
+            auto & defaultCharacter = availableCharactersState.GetAllCharacters().front();
+            character->FindItem(defaultCharacter.windowId)->Check();
+            characterState.ChangeCharacter(defaultCharacter);
             characterState.NotifyAll();
             wxASSERT_MSG(characterRadioItemNum == availableCharactersState.GetAllCharacters().size(),
                     wxString::Format("characterRadioItemNum: \"%d\" does not equal"
@@ -156,23 +159,14 @@ MenuBar::MenuBar(wxWindow* frame, States & states) :
     // Register. The function passed is what gets called upon notify all (Basically "update" function)
     // availableCharactersState registration is done at the end because it requires the Character submenu instantiated.
     availableCharactersState.Register([this, character, &characterState](const AvailableCharactersState & availableCharactersState) {
-        auto & allCharacters = availableCharactersState.GetAllCharacters();
-        // If a new character seems to have been added...
-        if (allCharacters.size() > characterRadioItemNum) {
-            wxUint32 insertPos = availableCharactersState.GetAffectedPosition();
-            character->InsertRadioItem(insertPos, CHARACTER_ID_LOWEST + characterRadioItemNum,
-                    allCharacters[insertPos].first);
-            wxUint32 charRadItNum = characterRadioItemNum;
-            Bind(wxEVT_MENU, [charRadItNum, &characterState](wxCommandEvent & event) {
-                characterState.ChangeCharacterRadioPos(charRadItNum);
-                characterState.NotifyAll();
-            }, CHARACTER_ID_LOWEST + charRadItNum);
-            ++characterRadioItemNum;
-        } else {
-            // update character info
-            //character->GetMenuItems()[characterState.GetCharacterRadioPos()]->SetItemLabel(availableCharactersState.
-            //    GetAllCharacters()[availableCharactersState.GetAffectedPosition()].first);
-            // This feature will be implemented in a future version
-        }
+        // New characters will always be appended to the radio item so get the item at the end (size() - 1)
+        auto & newCharacter = availableCharactersState.GetAllCharacters().back();
+        character->InsertRadioItem(characterRadioItemNum, newCharacter.windowId, newCharacter.name);
+        Bind(wxEVT_MENU, [&newCharacter, &characterState](wxCommandEvent &event) {
+            characterState.ChangeCharacter(newCharacter);
+            characterState.NotifyAll();
+        }, newCharacter.windowId);
+        ++characterRadioItemNum;
+        // Update character feature has been cancelled.
     });
 }

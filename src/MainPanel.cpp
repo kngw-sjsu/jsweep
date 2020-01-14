@@ -75,13 +75,12 @@ MainPanel::MainPanel(wxWindow* parent, States & states) : wxPanel(parent), timeE
     auto characterView = new wxWindow(this, wxID_ANY, wxDefaultPosition,
             wxSize(CharacterState::CHARACTER_IMAGE_LENGTH, CharacterState::CHARACTER_IMAGE_LENGTH));
     characterView->SetBackgroundStyle(wxBG_STYLE_PAINT);
-    characterView->Bind(wxEVT_PAINT, [this, &availableCharactersState, &characterState, characterView](wxPaintEvent & event) {
+    characterView->Bind(wxEVT_PAINT, [this, &characterState, characterView](wxPaintEvent & event) {
         wxAutoBufferedPaintDC dc(characterView);
         dc.Clear();
         if (auto context = wxGraphicsContext::Create(dc)) {
-            context->DrawBitmap(availableCharactersState.GetCharacterBitmap(characterState.GetCharacterRadioPos(),
-                    characterState.GetStatus()), 0, 0,
-                    CharacterState::CHARACTER_IMAGE_LENGTH, CharacterState::CHARACTER_IMAGE_LENGTH);
+            context->DrawBitmap(characterState.GetCurrentCharacter().bitmaps[characterState.GetStatus()], 0, 0,
+                                CharacterState::CHARACTER_IMAGE_LENGTH, CharacterState::CHARACTER_IMAGE_LENGTH);
             delete context;
         }
     });

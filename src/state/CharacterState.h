@@ -6,8 +6,8 @@
 #define JSWEEP_CHARACTERSTATE_H
 
 #include <wx/bitmap.h>
+#include "Character.h"
 #include "State.h"
-
 
 class CharacterState : public State<CharacterState> {
 public:
@@ -23,7 +23,7 @@ public:
     };
 private:
     State status;
-    wxUint32 characterRadioPos;
+    const Character* currentCharacter;
 public:
     static const wxUint32 CHARACTER_IMAGE_LENGTH;
 
@@ -31,28 +31,28 @@ public:
     ~CharacterState(){PRINT_MSG("CharacterState destr called");}
 
     /**
-     * Updates character's radio item position to the one specified.
-     * @param characterRadioPos The position of the radio item selected in the Character menu.
+     * Updates character to the one specified.
+     * @param newCharacter New character to display.
      */
-    void ChangeCharacterRadioPos(wxUint32 characterRadioPos) {
-        this->characterRadioPos = characterRadioPos;
+    void ChangeCharacter(const Character & newCharacter) {
+        currentCharacter = &newCharacter;
     }
 
     /**
      * Changes character's status
-     * @param status Enum of range 0-3 indicating character's facial expression.
+     * @param newStatus Enum of range 0-3 indicating character's facial expression.
      * Check the State enum for further details.
      */
-    void ChangeStatus(State status) {
-        this->status = status;
+    void ChangeStatus(State newStatus) {
+        status = newStatus;
     }
 
     /**
-     * Gets the position of the radio item currently selected.
-     * @return The position of the radio item in the Character menu currently selected.
+     * Gets the currently displayed character.
+     * @return Current character.
      */
-    wxUint32 GetCharacterRadioPos() {
-        return characterRadioPos;
+    const Character & GetCurrentCharacter() {
+        return *currentCharacter;
     }
 
     /**

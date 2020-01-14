@@ -53,5 +53,7 @@ target_include_directories(jsweep PRIVATE src)
 target_link_libraries(jsweep
         ${wxWidgets_LIBRARIES}
         ${MinGW_lib_DIR}/libuxtheme.a # without this, a lot of undefined reference happens
+        -static-libstdc++
+        -static-libgcc
         nlohmann_json::nlohmann_json
 )
